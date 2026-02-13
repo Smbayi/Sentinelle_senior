@@ -7,7 +7,7 @@ Systeme de suivi, detection et prevention de la fragilite motrice chez les perso
 - **Gestion des patients** : Enregistrement et suivi des dossiers
 - **Evaluations** : Tests fonctionnels et calcul du score de fragilite (criteres de Fried)
 - **Detection automatique** : Alertes en cas de deterioration
-- **Tableau de bord** : Visualisation cardiaque et indicateurs de sante
+- **Tableau de bord** : Visualisation squelettes et indicateurs de sante
 - **API REST** : Endpoints pour l'integration
 
 ## Installation
@@ -45,7 +45,7 @@ Sentinel_Senior/
 │   ├── routes.py
 │   ├── api.py
 │   ├── detection.py
-│   ├── static/images/    # Image coeur : coeur.png ou coeur.jpg
+│   ├── static/images/    # squelette1.png, squelette2.png
 │   └── templates/
 ├── run.py
 ├── requirements.txt
@@ -61,9 +61,11 @@ Sentinel_Senior/
 - `GET /api/alertes/non-traitees` - Alertes en attente
 - `GET /api/statistiques/globales` - Statistiques
 
-## Image du coeur
+## Images squelette
 
-Placez l'image du coeur dans : `app/static/images/coeur.png` ou `coeur.jpg`
+Placez vos deux images dans `app/static/images/` :
+- `squelette1.png` (ou .jpg)
+- `squelette2.png` (ou .jpg)
 
 ## Licence
 

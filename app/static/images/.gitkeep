@@ -1,10 +1,12 @@
 # ============================================================
-# EMPLACEMENT POUR L'IMAGE DU CŒUR
+# EMPLACEMENT POUR LES IMAGES DE SQUELETTE
 # ============================================================
-# Téléchargez votre image du cœur et placez-la dans ce dossier.
+# Placez vos deux images de squelette dans ce dossier.
 #
-# Nom du fichier à utiliser : coeur.png  OU  coeur.jpg
+# Noms des fichiers :
+#   - squelette1.png  (ou squelette1.jpg)
+#   - squelette2.png  (ou squelette2.jpg)
 #
-# L'image s'affichera automatiquement au centre du tableau de bord
-# lorsque vous lancez l'application.
+# Les images s'afficheront cote a cote dans le tableau de bord.
+# Elles sont redimensionnees automatiquement pour rester dans le cadre.
 # ============================================================

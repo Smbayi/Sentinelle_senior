@@ -174,50 +174,56 @@
             position: relative;
         }
 
-        .heart-container {
+        /* Zone squelette - deux photos cote a cote */
+        .skeleton-container {
             width: 100%;
             height: 380px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 16px;
             background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
             border-radius: 12px;
             overflow: hidden;
             position: relative;
         }
 
-        /* Zone cœur uniquement - aucune superposition */
-        .heart-wrapper {
+        .skeleton-slot {
             width: 100%;
             height: 100%;
+            min-height: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
         }
 
-        /* 
-           EMPLACEMENT POUR L'IMAGE DU CŒUR
-           Placez votre image dans : app/static/images/coeur.png (ou coeur.jpg)
-        */
-        .heart-image {
+        /* Images adaptees au cadre - pas de deformation ni exageration */
+        .skeleton-image {
             max-width: 100%;
             max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
         }
 
-        .heart-placeholder {
+        .skeleton-placeholder {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: #94a3b8;
             text-align: center;
-            padding: 40px;
+            padding: 24px;
+            font-size: 12px;
         }
 
-        .heart-placeholder i {
-            font-size: 80px;
-            margin-bottom: 16px;
+        .skeleton-placeholder i {
+            font-size: 48px;
+            margin-bottom: 12px;
             opacity: 0.5;
         }
 
@@ -470,6 +476,17 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        @media (max-width: 768px) {
+            .skeleton-container {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 320px;
+            }
+            .skeleton-slot {
+                min-height: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -501,26 +518,39 @@
     <main class="main-content">
         <div class="dashboard-header">
             <div>
-                <h1 class="dashboard-title">Aperçu Santé<br>Patient</h1>
+                <h1 class="dashboard-title">Aperçu Santé</h1>
             </div>
             <div class="progress-badge">8%</div>
         </div>
 
         <div class="dashboard-layout">
-            <!-- Left: Visualisation avec cœur -->
+            <!-- Left: Visualisation avec deux squelettes -->
             <div class="visualisation-card">
-                <div class="heart-container">
-                    <!-- Zone dédiée au cœur uniquement - aucune superposition -->
-                    <div class="heart-wrapper">
-                        <img src="{{ url_for('static', filename='images/coeur.png') }}" 
-                             alt="Visualisation cardiaque" 
-                             class="heart-image"
-                             id="heartImage"
-                             onerror="tryCoeurJpg(this);">
-                        <div class="heart-placeholder" id="heartPlaceholder" style="display: none;">
-                            <i class="bi bi-heart-pulse"></i>
-                            <p class="mb-0 fw-semibold">Image du cœur</p>
-                            <p class="small mb-0 mt-1">Placez votre image dans :<br><code>app/static/images/coeur.png</code></p>
+                <div class="skeleton-container">
+                    <!-- Squelette 1 -->
+                    <div class="skeleton-slot">
+                        <img src="{{ url_for('static', filename='images/squelette1.png') }}" 
+                             alt="Squelette 1" 
+                             class="skeleton-image"
+                             id="skeleton1"
+                             onerror="trySkeleton1Jpg(this);">
+                        <div class="skeleton-placeholder" id="skeleton1Placeholder" style="display: none;">
+                            <i class="bi bi-person-standing"></i>
+                            <p class="mb-0 fw-semibold">Squelette 1</p>
+                            <p class="mb-0 mt-1"><code>images/squelette1.png</code></p>
+                        </div>
+                    </div>
+                    <!-- Squelette 2 -->
+                    <div class="skeleton-slot">
+                        <img src="{{ url_for('static', filename='images/squelette2.png') }}" 
+                             alt="Squelette 2" 
+                             class="skeleton-image"
+                             id="skeleton2"
+                             onerror="trySkeleton2Jpg(this);">
+                        <div class="skeleton-placeholder" id="skeleton2Placeholder" style="display: none;">
+                            <i class="bi bi-person-standing"></i>
+                            <p class="mb-0 fw-semibold">Squelette 2</p>
+                            <p class="mb-0 mt-1"><code>images/squelette2.png</code></p>
                         </div>
                     </div>
                 </div>
@@ -618,22 +648,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function tryCoeurJpg(img) {
+        function trySkeleton1Jpg(img) {
             if (img.dataset.triedJpg) {
                 img.style.display = 'none';
-                document.getElementById('heartPlaceholder').style.display = 'flex';
+                document.getElementById('skeleton1Placeholder').style.display = 'flex';
                 return;
             }
             img.dataset.triedJpg = '1';
-            img.src = "{{ url_for('static', filename='images/coeur.jpg') }}";
+            img.src = "{{ url_for('static', filename='images/squelette1.jpg') }}";
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            const heartImg = document.getElementById('heartImage');
-            const placeholder = document.getElementById('heartPlaceholder');
-            if (heartImg && heartImg.complete && heartImg.naturalWidth === 0 && !heartImg.dataset.triedJpg) {
-                tryCoeurJpg(heartImg);
+        function trySkeleton2Jpg(img) {
+            if (img.dataset.triedJpg) {
+                img.style.display = 'none';
+                document.getElementById('skeleton2Placeholder').style.display = 'flex';
+                return;
             }
-        });
+            img.dataset.triedJpg = '1';
+            img.src = "{{ url_for('static', filename='images/squelette2.jpg') }}";
+        }
     </script>
 </body>
 </html>
