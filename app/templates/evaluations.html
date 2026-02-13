@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Évaluations - Sentinel Senior</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c5aa0 0%, #4a90e2 100%); }
+        .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+        .badge-fragile { background-color: #ffc107; }
+        .badge-tres-fragile { background-color: #dc3545; }
+        .badge-pre-fragile { background-color: #17a2b8; }
+        .badge-normal { background-color: #28a745; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-shield-check"></i> Sentinel Senior</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Accueil</a>
+                <a class="nav-link" href="/patients">Patients</a>
+                <a class="nav-link active" href="/evaluations">Évaluations</a>
+                <a class="nav-link" href="/alertes">Alertes</a>
+                <a class="nav-link" href="/statistiques">Statistiques</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-clipboard-check"></i> Évaluations de Fragilité</h1>
+            <button class="btn btn-primary" onclick="showNewEvaluationModal()">
+                <i class="bi bi-plus-circle"></i> Nouvelle Évaluation
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Filtrer par patient:</label>
+                    <select class="form-select" id="filterPatient" onchange="loadEvaluations()">
+                        <option value="">Tous les patients</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Date</th>
+                                <th>Score</th>
+                                <th>Niveau</th>
+                                <th>Vitesse Marche</th>
+                                <th>Force Préhension</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evaluationsBody">
+                            <tr><td colspan="7" class="text-center">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouvelle Évaluation -->
+    <div class="modal fade" id="modalEvaluation" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nouvelle Évaluation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEvaluation">
+                        <div class="mb-3">
+                            <label class="form-label">Patient *</label>
+                            <select class="form-select" name="patient_id" id="selectPatient" required>
+                                <option value="">Sélectionner un patient...</option>
+                            </select>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Tests Fonctionnels</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Vitesse de marche (m/s)</label>
+                                <input type="number" step="0.01" class="form-control" name="vitesse_marche">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Force préhension (kg)</label>
+                                <input type="number" step="0.1" class="form-control" name="force_prehension">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Équilibre statique (s)</label>
+                                <input type="number" step="0.1" class="form-control" name="equilibre_statique">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Test lever chaise (s)</label>
+                                <input type="number" step="0.1" class="form-control" name="test_leve_chaise">
+                            </div>
+                        </div>
+
+                        <h6 class="mt-4 mb-3">Critères de Fragilité (Fried)</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="perte_poids" id="perte_poids">
+                                    <label class="form-check-label" for="perte_poids">Perte de poids involontaire</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fatigue" id="fatigue">
+                                    <label class="form-check-label" for="fatigue">Fatigue/Épuisement</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="activite_physique_reduite" id="activite">
+                                    <label class="form-check-label" for="activite">Activité physique réduite</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="lenteur_marche" id="lenteur">
+                                    <label class="form-check-label" for="lenteur">Lenteur de marche</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="faiblesse" id="faiblesse">
+                                    <label class="form-check-label" for="faiblesse">Faiblesse musculaire</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Observations</label>
+                            <textarea class="form-control" name="observations" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Évaluateur</label>
+                            <input type="text" class="form-control" name="evaluateur">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEvaluation()">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let patients = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPatients();
+            loadEvaluations();
+        });
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/patients');
+                patients = await response.json();
+                
+                const select = document.getElementById('selectPatient');
+                const filter = document.getElementById('filterPatient');
+                
+                patients.forEach(p => {
+                    const option1 = new Option(`${p.prenom} ${p.nom}`, p.id);
+                    const option2 = new Option(`${p.prenom} ${p.nom}`, p.id);
+                    select.add(option1);
+                    filter.add(option2);
+                });
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        async function loadEvaluations() {
+            const patientId = document.getElementById('filterPatient').value;
+            const url = patientId ? `/api/patients/${patientId}/evaluations` : '/api/evaluations';
+            
+            try {
+                const response = await fetch(url);
+                const evaluations = await response.json();
+                
+                const tbody = document.getElementById('evaluationsBody');
+                if (evaluations.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Aucune évaluation</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = evaluations.map(e => {
+                    const patient = patients.find(p => p.id === e.patient_id);
+                    const badgeClass = e.niveau_fragilite === 'Normal' ? 'badge-normal' :
+                                     e.niveau_fragilite === 'Pré-fragile' ? 'badge-pre-fragile' :
+                                     e.niveau_fragilite === 'Fragile' ? 'badge-fragile' : 'badge-tres-fragile';
+                    
+                    return `
+                        <tr>
+                            <td>${patient ? `${patient.prenom} ${patient.nom}` : 'N/A'}</td>
+                            <td>${new Date(e.date_evaluation).toLocaleDateString('fr-FR')}</td>
+                            <td>${e.score_fragilite ? e.score_fragilite.toFixed(1) : '-'}</td>
+                            <td><span class="badge ${badgeClass}">${e.niveau_fragilite || '-'}</span></td>
+                            <td>${e.vitesse_marche ? e.vitesse_marche.toFixed(2) + ' m/s' : '-'}</td>
+                            <td>${e.force_prehension ? e.force_prehension.toFixed(1) + ' kg' : '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewEvaluation(${e.id})">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function showNewEvaluationModal() {
+            const modal = new bootstrap.Modal(document.getElementById('modalEvaluation'));
+            modal.show();
+        }
+
+        async function saveEvaluation() {
+            const form = document.getElementById('formEvaluation');
+            const formData = new FormData(form);
+            const data = {
+                patient_id: parseInt(formData.get('patient_id')),
+                vitesse_marche: formData.get('vitesse_marche') ? parseFloat(formData.get('vitesse_marche')) : null,
+                force_prehension: formData.get('force_prehension') ? parseFloat(formData.get('force_prehension')) : null,
+                equilibre_statique: formData.get('equilibre_statique') ? parseFloat(formData.get('equilibre_statique')) : null,
+                test_leve_chaise: formData.get('test_leve_chaise') ? parseFloat(formData.get('test_leve_chaise')) : null,
+                perte_poids: formData.get('perte_poids') === 'on',
+                fatigue: formData.get('fatigue') === 'on',
+                activite_physique_reduite: formData.get('activite_physique_reduite') === 'on',
+                lenteur_marche: formData.get('lenteur_marche') === 'on',
+                faiblesse: formData.get('faiblesse') === 'on',
+                observations: formData.get('observations'),
+                evaluateur: formData.get('evaluateur')
+            };
+            
+            try {
+                const response = await fetch(`/api/patients/${data.patient_id}/evaluations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEvaluation'));
+                    modal.hide();
+                    form.reset();
+                    loadEvaluations();
+                    alert('Évaluation enregistrée avec succès!');
+                } else {
+                    const error = await response.json();
+                    alert('Erreur: ' + error.error);
+                }
+            } catch (error) {
+                alert('Erreur lors de l\'enregistrement');
+                console.error(error);
+            }
+        }
+
+        function viewEvaluation(id) {
+            // Rediriger vers la page de détail de l'évaluation
+            console.log('Voir évaluation', id);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Senior - Tableau de Bord Santé</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --card-shadow-hover: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* Header ProHealth style */
+        .header-nav {
+            background: #ffffff;
+            padding: 16px 32px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-blue);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: #1e293b;
+        }
+
+        .nav-tab.active {
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: var(--card-shadow);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-actions i {
+            font-size: 20px;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .header-actions i:hover {
+            color: var(--primary-blue);
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .profile-avatar::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        /* Main content */
+        .main-content {
+            padding: 24px 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1.3;
+        }
+
+        .progress-badge {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-blue);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        /* Left section - Visualisation */
+        .visualisation-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+            min-height: 500px;
+            position: relative;
+        }
+
+        .heart-container {
+            width: 100%;
+            height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Zone cœur uniquement - aucune superposition */
+        .heart-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 
+           EMPLACEMENT POUR L'IMAGE DU CŒUR
+           Placez votre image dans : app/static/images/coeur.png (ou coeur.jpg)
+        */
+        .heart-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .heart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .heart-placeholder i {
+            font-size: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Infos sous le cœur - pas de superposition */
+        .heart-info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .heart-info-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+
+        .heart-info-item .label {
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .heart-info-item .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        /* Right section - Cards */
+        .dashboard-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .search-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .btn-consultation {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .btn-consultation:hover {
+            background: var(--primary-hover);
+            color: white;
+        }
+
+        .dash-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: box-shadow 0.2s;
+        }
+
+        .dash-card:hover {
+            box-shadow: var(--card-shadow-hover);
+        }
+
+        .card-medication {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+        }
+
+        .medication-left {
+            display: flex;
+            gap: 16px;
+        }
+
+        .med-icon {
+            width: 48px;
+            height: 48px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary-blue);
+        }
+
+        .med-content h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .med-percent {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .med-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .card-scan {
+            text-align: right;
+        }
+
+        .card-scan h4 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .card-scan .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .cards-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .vitals-card {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .vitals-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .vitals-list {
+            flex: 1;
+        }
+
+        .vital-item {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .vital-item strong {
+            color: #0f172a;
+        }
+
+        .fragility-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fragility-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 80%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .fragility-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .fragility-card p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        .fragility-score-value {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .fragility-score-value .fragility-percent {
+            font-size: 20px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .bar-chart-mini {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 60px;
+            margin-top: 12px;
+        }
+
+        .bar-mini {
+            flex: 1;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            min-height: 10px;
+        }
+
+        .bar-mini.active {
+            background: var(--primary-blue);
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .heart-info-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header-nav">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <i class="bi bi-shield-heart"></i>
+            </div>
+            <span class="logo-text">Sentinel Senior</span>
+        </div>
+
+        <nav class="nav-tabs">
+            <a href="/" class="nav-tab active">Aperçu</a>
+            <a href="/evaluations" class="nav-tab">Documents</a>
+            <a href="/patients" class="nav-tab">Patients</a>
+            <a href="/alertes" class="nav-tab">Alertes</a>
+            <a href="/statistiques" class="nav-tab">Statistiques</a>
+        </nav>
+
+        <div class="header-actions">
+            <i class="bi bi-search"></i>
+            <i class="bi bi-bell"></i>
+            <div class="profile-avatar">U</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="dashboard-title">Aperçu Santé<br>Patient</h1>
+            </div>
+            <div class="progress-badge">8%</div>
+        </div>
+
+        <div class="dashboard-layout">
+            <!-- Left: Visualisation avec cœur -->
+            <div class="visualisation-card">
+                <div class="heart-container">
+                    <!-- Zone dédiée au cœur uniquement - aucune superposition -->
+                    <div class="heart-wrapper">
+                        <img src="{{ url_for('static', filename='images/coeur.png') }}" 
+                             alt="Visualisation cardiaque" 
+                             class="heart-image"
+                             id="heartImage"
+                             onerror="tryCoeurJpg(this);">
+                        <div class="heart-placeholder" id="heartPlaceholder" style="display: none;">
+                            <i class="bi bi-heart-pulse"></i>
+                            <p class="mb-0 fw-semibold">Image du cœur</p>
+                            <p class="small mb-0 mt-1">Placez votre image dans :<br><code>app/static/images/coeur.png</code></p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Infos sous le cœur - bien séparées, pas de superposition -->
+                <div class="heart-info-row">
+                    <div class="heart-info-item">
+                        <div class="label"><i class="bi bi-heart-pulse text-primary me-1"></i> Fragilité motrice</div>
+                        <div class="value">Suivi actif</div>
+                    </div>
+                    <div class="heart-info-item">
+                        <div class="label">Index de mobilité</div>
+                        <div class="value">98.5%</div>
+                    </div>
+                    <div class="heart-info-item">
+                        <div class="label"><i class="bi bi-calendar3 me-1"></i> Prochaine évaluation</div>
+                        <div class="value" style="font-size: 14px;">Lundi 10:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Cards - Ordre : Score fragilité → Données vitales → Compléments → Alertes -->
+            <div class="dashboard-cards">
+                <!-- 1. Score fragilité motrice (priorité) -->
+                <div class="dash-card fragility-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3>Score Fragilité Motrice</h3>
+                            <p class="mb-3">Index de prévention</p>
+                            <div class="fragility-score-value">98.5<span class="fragility-percent">%</span></div>
+                            <div class="bar-chart-mini">
+                                <div class="bar-mini" style="height: 40%"></div>
+                                <div class="bar-mini" style="height: 55%"></div>
+                                <div class="bar-mini active" style="height: 90%"></div>
+                                <div class="bar-mini" style="height: 45%"></div>
+                            </div>
+                        </div>
+                        <a href="/statistiques" class="text-white"><i class="bi bi-arrow-right fs-4"></i></a>
+                    </div>
+                </div>
+
+                <!-- 2. Données vitales -->
+                <div class="dash-card vitals-card">
+                    <div class="vitals-avatar"><i class="bi bi-person"></i></div>
+                    <div class="vitals-list">
+                        <div class="vital-item"><strong>Freq. cardiaque</strong> 72 bpm</div>
+                        <div class="vital-item"><strong>Température</strong> 36.5°C</div>
+                        <div class="vital-item"><strong>SpO2</strong> 98%</div>
+                        <a href="/patients" class="btn btn-sm btn-primary mt-2">Voir détails →</a>
+                    </div>
+                </div>
+
+                <!-- 3. Recherche + Consultation -->
+                <div class="search-row">
+                    <input type="text" class="search-input" placeholder="Rechercher médicaments...">
+                    <a href="/evaluations" class="btn-consultation">
+                        Consultation <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <!-- 4. Compléments + Scan Mobilité -->
+                <div class="dash-card card-medication">
+                    <div class="medication-left">
+                        <div class="med-icon"><i class="bi bi-capsule"></i></div>
+                        <div class="med-content">
+                            <h4>Compléments</h4>
+                            <div class="med-percent">25%</div>
+                            <div class="med-subtitle">Vitamine D • Calcium</div>
+                            <div class="bar-chart-mini mt-2">
+                                <div class="bar-mini" style="height: 30%"></div>
+                                <div class="bar-mini active" style="height: 60%"></div>
+                                <div class="bar-mini" style="height: 45%"></div>
+                                <div class="bar-mini" style="height: 80%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-scan">
+                        <h4>Évaluations</h4>
+                        <div class="value">{{ total_evaluations }}<span class="small text-muted"> éval.</span></div>
+                    </div>
+                </div>
+
+                <!-- 5. Alertes -->
+                <div class="dash-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">Alertes actives</h5>
+                            <p class="text-muted small mb-0">{{ alertes_urgentes }} alerte(s) non traitée(s)</p>
+                        </div>
+                        <a href="/alertes" class="btn btn-primary">Voir les alertes</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function tryCoeurJpg(img) {
+            if (img.dataset.triedJpg) {
+                img.style.display = 'none';
+                document.getElementById('heartPlaceholder').style.display = 'flex';
+                return;
+            }
+            img.dataset.triedJpg = '1';
+            img.src = "{{ url_for('static', filename='images/coeur.jpg') }}";
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const heartImg = document.getElementById('heartImage');
+            const placeholder = document.getElementById('heartPlaceholder');
+            if (heartImg && heartImg.complete && heartImg.naturalWidth === 0 && !heartImg.dataset.triedJpg) {
+                tryCoeurJpg(heartImg);
+            }
+        });
+    </script>
+</body>
+</html>

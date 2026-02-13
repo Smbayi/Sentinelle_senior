@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques - Sentinel Senior</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #2c5aa0 0%, #4a90e2 100%); }
+        .card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-shield-check"></i> Sentinel Senior</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Accueil</a>
+                <a class="nav-link" href="/patients">Patients</a>
+                <a class="nav-link" href="/evaluations">Évaluations</a>
+                <a class="nav-link" href="/alertes">Alertes</a>
+                <a class="nav-link active" href="/statistiques">Statistiques</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class="mb-4"><i class="bi bi-graph-up"></i> Statistiques et Analyses</h1>
+
+        <!-- Statistiques globales -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-primary" id="totalPatients">-</h3>
+                        <p class="text-muted mb-0">Patients Actifs</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-success" id="totalEvaluations">-</h3>
+                        <p class="text-muted mb-0">Évaluations</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-danger" id="alertesNonTraitees">-</h3>
+                        <p class="text-muted mb-0">Alertes Non Traitées</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3 class="text-info" id="moyenneFragilite">-</h3>
+                        <p class="text-muted mb-0">Score Moyen Fragilité</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Répartition par Niveau de Fragilité</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartRepartition"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Évolution Temporelle des Évaluations</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartEvolution"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau de répartition -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Détails de la Répartition</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Niveau de Fragilité</th>
+                                    <th>Nombre de Patients</th>
+                                    <th>Pourcentage</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableRepartition">
+                                <tr><td colspan="3" class="text-center">Chargement...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let chartRepartition, chartEvolution;
+
+        document.addEventListener('DOMContentLoaded', loadStatistiques);
+
+        async function loadStatistiques() {
+            try {
+                const response = await fetch('/api/statistiques/globales');
+                const stats = await response.json();
+                
+                // Mettre à jour les statistiques
+                document.getElementById('totalPatients').textContent = stats.total_patients;
+                document.getElementById('totalEvaluations').textContent = stats.total_evaluations;
+                document.getElementById('alertesNonTraitees').textContent = stats.alertes_non_traitees;
+                
+                // Calculer le score moyen
+                const repartition = stats.repartition_fragilite;
+                const total = Object.values(repartition).reduce((a, b) => a + b, 0);
+                document.getElementById('moyenneFragilite').textContent = total > 0 ? 
+                    (total / Object.keys(repartition).length).toFixed(1) : '-';
+                
+                // Mettre à jour le tableau
+                updateTableRepartition(repartition, total);
+                
+                // Créer les graphiques
+                createChartRepartition(repartition);
+                createChartEvolution();
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function updateTableRepartition(repartition, total) {
+            const tbody = document.getElementById('tableRepartition');
+            const labels = {
+                'Normal': 'Normal',
+                'Pré-fragile': 'Pré-fragile',
+                'Fragile': 'Fragile',
+                'Très fragile': 'Très fragile'
+            };
+            
+            tbody.innerHTML = Object.entries(repartition).map(([niveau, count]) => {
+                const pourcentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                return `
+                    <tr>
+                        <td><strong>${labels[niveau] || niveau}</strong></td>
+                        <td>${count}</td>
+                        <td>${pourcentage}%</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function createChartRepartition(repartition) {
+            const ctx = document.getElementById('chartRepartition').getContext('2d');
+            
+            if (chartRepartition) {
+                chartRepartition.destroy();
+            }
+            
+            chartRepartition = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Normal', 'Pré-fragile', 'Fragile', 'Très fragile'],
+                    datasets: [{
+                        data: [
+                            repartition['Normal'] || 0,
+                            repartition['Pré-fragile'] || 0,
+                            repartition['Fragile'] || 0,
+                            repartition['Très fragile'] || 0
+                        ],
+                        backgroundColor: [
+                            '#28a745',
+                            '#17a2b8',
+                            '#ffc107',
+                            '#dc3545'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true
+                }
+            });
+        }
+
+        async function createChartEvolution() {
+            const ctx = document.getElementById('chartEvolution').getContext('2d');
+            
+            try {
+                // Récupérer les évaluations récentes pour l'évolution
+                const response = await fetch('/api/evaluations');
+                const evaluations = await response.json();
+                
+                // Grouper par mois
+                const monthlyData = {};
+                evaluations.forEach(eval => {
+                    const date = new Date(eval.date_evaluation);
+                    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    if (!monthlyData[monthKey]) {
+                        monthlyData[monthKey] = [];
+                    }
+                    monthlyData[monthKey].push(eval);
+                });
+                
+                const months = Object.keys(monthlyData).sort();
+                const counts = months.map(month => monthlyData[month].length);
+                
+                if (chartEvolution) {
+                    chartEvolution.destroy();
+                }
+                
+                chartEvolution = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Nombre d\'évaluations',
+                            data: counts,
+                            borderColor: '#2c5aa0',
+                            backgroundColor: 'rgba(44, 90, 160, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation Médicale - Sentinel Senior</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(0, 20, 40, 0.8);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .header-info {
+            display: flex;
+            gap: 30px;
+            font-size: 16px;
+            color: #ffffff;
+        }
+
+        .header-info span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Left Panel */
+        .left-panel {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        /* Right Panel */
+        .right-panel {
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        /* Center - Skeleton Visualization */
+        .center-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .skeleton-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skeleton-base {
+            position: absolute;
+            bottom: 50px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .skeleton-svg {
+            width: 400px;
+            height: 700px;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+            z-index: 10;
+        }
+
+        .skeleton-part {
+            fill: rgba(135, 206, 250, 0.6);
+            stroke: #00ffff;
+            stroke-width: 2;
+            transition: all 0.3s ease;
+        }
+
+        .skeleton-part:hover {
+            fill: rgba(0, 255, 255, 0.8);
+            filter: drop-shadow(0 0 15px #00ffff);
+        }
+
+        .skeleton-part.highlight {
+            fill: rgba(255, 100, 100, 0.8);
+            stroke: #ff6666;
+            filter: drop-shadow(0 0 20px #ff6666);
+        }
+
+        /* Panel Cards */
+        .panel-card {
+            background: rgba(0, 30, 60, 0.7);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel-card h3 {
+            font-size: 18px;
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .main-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 15px #00ff88;
+            margin: 10px 0;
+        }
+
+        .value-label {
+            font-size: 14px;
+            color: #aaaaaa;
+            margin-top: 5px;
+        }
+
+        .value-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .value-item {
+            text-align: center;
+        }
+
+        .value-item .number {
+            font-size: 24px;
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .value-item .label {
+            font-size: 12px;
+            color: #888888;
+            margin-top: 5px;
+        }
+
+        /* Status Indicators */
+        .status-indicators {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .status-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #00ffff;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .status-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .status-label {
+            flex: 1;
+            font-size: 14px;
+            color: #ffffff;
+        }
+
+        /* Charts */
+        .chart-container {
+            margin: 15px 0;
+        }
+
+        .chart-line {
+            height: 60px;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .chart-line svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-line path {
+            stroke: #00ff88;
+            stroke-width: 2;
+            fill: none;
+            filter: drop-shadow(0 0 3px #00ff88);
+        }
+
+        .chart-value {
+            font-size: 20px;
+            color: #ffffff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .chart-label {
+            font-size: 11px;
+            color: #888888;
+        }
+
+        /* Progress Bars */
+        .progress-section {
+            margin: 15px 0;
+        }
+
+        .progress-item {
+            margin: 10px 0;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #aaaaaa;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #00ff88);
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            transition: width 0.5s ease;
+        }
+
+        /* Data Grid */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .data-cell {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .data-cell .value {
+            font-size: 20px;
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .data-cell .label {
+            font-size: 11px;
+            color: #888888;
+            margin-top: 5px;
+        }
+
+        .data-cell .sign {
+            font-size: 16px;
+            color: #00ff88;
+            margin-right: 5px;
+        }
+
+        .data-cell.negative .sign {
+            color: #ff6666;
+        }
+
+        /* Circular Icons */
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .icon-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3), rgba(0, 255, 255, 0.1));
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #00ffff;
+            position: relative;
+        }
+
+        .icon-circle::after {
+            content: attr(data-value);
+            position: absolute;
+            bottom: -20px;
+            font-size: 10px;
+            color: #888888;
+        }
+
+        /* Health Indicators */
+        .health-indicators {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .health-icon {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .health-icon .icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3), transparent);
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .health-icon .label {
+            font-size: 12px;
+            color: #aaaaaa;
+            margin-top: 5px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">Sentinel Senior - Analyse de Fragilité Motrice</div>
+        <div class="header-info">
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="currentTime">12:36:30</span>
+            </span>
+            <span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>20/30 °C</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <!-- Indice Complet -->
+            <div class="panel-card">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div>
+                        <div class="main-value" id="indiceComplet">102.67</div>
+                        <div class="value-label">Indice Complet de Fragilité Motrice</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="value-item">
+                            <div class="number" style="color: #ff6666;">102</div>
+                            <div class="label">Vitesse Marche</div>
+                        </div>
+                        <div class="value-item">
+                            <div class="number" style="color: #00ff88;">86</div>
+                            <div class="label">Force Préhension</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicateurs d'État -->
+            <div class="panel-card">
+                <h3>Indicateurs d'État</h3>
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <div class="status-checkbox"></div>
+                        <div class="status-label">Détérioration Détectée</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-checkbox checked"></div>
+                        <div class="status-label">Équilibre Stable</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-checkbox checked"></div>
+                        <div class="status-label">Mobilité Normale</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fréquences Motrices -->
+            <div class="panel-card">
+                <h3>Mesures Motrices</h3>
+                <div class="chart-container">
+                    <div class="chart-line">
+                        <div class="chart-value">85</div>
+                        <div class="chart-label">normal</div>
+                        <svg viewBox="0 0 200 40" preserveAspectRatio="none">
+                            <path d="M 0 30 Q 50 10, 100 20 T 200 15" stroke="#00ff88" fill="none" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="chart-line">
+                        <div class="chart-value">76</div>
+                        <div class="chart-label">équilibre</div>
+                        <svg viewBox="0 0 200 40" preserveAspectRatio="none">
+                            <path d="M 0 25 Q 50 15, 100 18 T 200 20" stroke="#ff6666" fill="none" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <div class="chart-line">
+                        <div class="chart-value">25</div>
+                        <div class="chart-label">test chaise</div>
+                        <svg viewBox="0 0 200 40" preserveAspectRatio="none">
+                            <path d="M 0 35 Q 50 25, 100 30 T 200 28" stroke="#ffaa00" fill="none" stroke-width="2"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Données Fonctionnelles -->
+            <div class="panel-card">
+                <h3>Données de Fonctionnement</h3>
+                <div class="data-grid">
+                    <div class="data-cell">
+                        <span class="sign">+</span>
+                        <span class="value">856</span>
+                        <div class="label">Mobilité Membres<br/>STANDARD - POOR - TIME</div>
+                    </div>
+                    <div class="data-cell">
+                        <span class="sign">+</span>
+                        <span class="value">135</span>
+                        <div class="label">Fonction Équilibre</div>
+                    </div>
+                    <div class="data-cell negative">
+                        <span class="sign">-</span>
+                        <span class="value">574</span>
+                        <div class="label">Fonction Force</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détection Globale -->
+            <div class="panel-card">
+                <h3>Détection Globale</h3>
+                <div style="margin: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+                        <span style="color: #aaaaaa;">Détection Motrice</span>
+                        <div style="display: flex; gap: 15px;">
+                            <span style="color: #00ff88; font-size: 20px; font-weight: bold;">102</span>
+                            <span style="color: #ffaa00; font-size: 20px; font-weight: bold;">362</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+                        <span style="color: #aaaaaa;">Détection Équilibre</span>
+                        <div style="display: flex; gap: 15px;">
+                            <span style="color: #00ff88; font-size: 20px; font-weight: bold;">263</span>
+                            <span style="color: #ffaa00; font-size: 20px; font-weight: bold;">124</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center - Skeleton -->
+        <div class="center-area">
+            <div class="skeleton-container">
+                <div class="skeleton-base"></div>
+                <svg class="skeleton-svg" viewBox="0 0 250 400" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="boneGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:rgba(135, 206, 250, 0.8);stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:rgba(173, 216, 230, 0.9);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:rgba(135, 206, 250, 0.6);stop-opacity:1" />
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Head - Skull -->
+                    <circle class="skeleton-part" cx="125" cy="35" r="22" fill="url(#boneGradient)" filter="url(#glow)"/>
+                    <ellipse class="skeleton-part" cx="115" cy="32" rx="3" ry="4" fill="rgba(0, 255, 255, 0.6)"/>
+                    <ellipse class="skeleton-part" cx="135" cy="32" rx="3" ry="4" fill="rgba(0, 255, 255, 0.6)"/>
+                    
+                    <!-- Neck -->
+                    <rect class="skeleton-part" x="120" y="55" width="10" height="15" rx="5" fill="url(#boneGradient)"/>
+                    
+                    <!-- Spine/Vertebral Column -->
+                    <rect class="skeleton-part" x="122" y="70" width="6" height="140" rx="3" fill="url(#boneGradient)" filter="url(#glow)"/>
+                    
+                    <!-- Ribs - More detailed -->
+                    <ellipse class="skeleton-part" cx="125" cy="105" rx="35" ry="22" fill="none" stroke="rgba(0, 255, 255, 0.7)" stroke-width="2"/>
+                    <ellipse class="skeleton-part" cx="125" cy="130" rx="35" ry="22" fill="none" stroke="rgba(0, 255, 255, 0.7)" stroke-width="2"/>
+                    <ellipse class="skeleton-part" cx="125" cy="155" rx="32" ry="20" fill="none" stroke="rgba(0, 255, 255, 0.7)" stroke-width="2"/>
+                    
+                    <!-- Shoulder Blades -->
+                    <ellipse class="skeleton-part" cx="90" cy="110" rx="12" ry="8" fill="rgba(135, 206, 250, 0.5)" stroke="rgba(0, 255, 255, 0.7)" stroke-width="2"/>
+                    <ellipse class="skeleton-part" cx="160" cy="110" rx="12" ry="8" fill="rgba(135, 206, 250, 0.5)" stroke="rgba(0, 255, 255, 0.7)" stroke-width="2"/>
+                    
+                    <!-- Pelvis -->
+                    <path class="skeleton-part" d="M 85 210 Q 85 200, 95 200 L 105 205 L 125 210 L 145 205 L 155 200 Q 165 200, 165 210 L 165 225 Q 165 235, 155 235 L 145 230 L 125 235 L 105 230 L 95 235 Q 85 235, 85 225 Z" 
+                          fill="url(#boneGradient)" stroke="rgba(0, 255, 255, 0.7)" stroke-width="2" filter="url(#glow)"/>
+                    
+                    <!-- Left Arm -->
+                    <!-- Upper arm -->
+                    <line class="skeleton-part" x1="95" y1="115" x2="55" y2="150" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Shoulder joint -->
+                    <circle class="skeleton-part" cx="95" cy="115" r="6" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Elbow -->
+                    <circle class="skeleton-part" cx="55" cy="150" r="7" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Forearm -->
+                    <line class="skeleton-part" x1="55" y1="150" x2="30" y2="195" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Wrist -->
+                    <circle class="skeleton-part" cx="30" cy="195" r="5" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Hand -->
+                    <ellipse class="skeleton-part" cx="25" cy="205" rx="8" ry="5" fill="rgba(135, 206, 250, 0.5)"/>
+                    
+                    <!-- Right Arm -->
+                    <!-- Upper arm -->
+                    <line class="skeleton-part" x1="155" y1="115" x2="195" y2="150" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Shoulder joint -->
+                    <circle class="skeleton-part" cx="155" cy="115" r="6" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Elbow -->
+                    <circle class="skeleton-part" cx="195" cy="150" r="7" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Forearm -->
+                    <line class="skeleton-part" x1="195" y1="150" x2="220" y2="195" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Wrist -->
+                    <circle class="skeleton-part" cx="220" cy="195" r="5" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Hand -->
+                    <ellipse class="skeleton-part" cx="225" cy="205" rx="8" ry="5" fill="rgba(135, 206, 250, 0.5)"/>
+                    
+                    <!-- Left Leg -->
+                    <!-- Thigh -->
+                    <line class="skeleton-part" x1="105" y1="230" x2="100" y2="320" stroke-width="6" stroke-linecap="round"/>
+                    <!-- Hip joint -->
+                    <circle class="skeleton-part" cx="105" cy="230" r="8" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Knee -->
+                    <circle class="skeleton-part" cx="100" cy="320" r="9" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Shin -->
+                    <line class="skeleton-part" x1="100" y1="320" x2="100" y2="380" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Ankle -->
+                    <circle class="skeleton-part" cx="100" cy="380" r="6" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Foot -->
+                    <ellipse class="skeleton-part" cx="95" cy="390" rx="12" ry="6" fill="rgba(135, 206, 250, 0.5)"/>
+                    
+                    <!-- Right Leg -->
+                    <!-- Thigh -->
+                    <line class="skeleton-part" x1="145" y1="230" x2="150" y2="320" stroke-width="6" stroke-linecap="round"/>
+                    <!-- Hip joint -->
+                    <circle class="skeleton-part" cx="145" cy="230" r="8" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Knee -->
+                    <circle class="skeleton-part" cx="150" cy="320" r="9" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Shin -->
+                    <line class="skeleton-part" x1="150" y1="320" x2="150" y2="380" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Ankle -->
+                    <circle class="skeleton-part" cx="150" cy="380" r="6" fill="rgba(0, 255, 255, 0.8)"/>
+                    <!-- Foot -->
+                    <ellipse class="skeleton-part" cx="155" cy="390" rx="12" ry="6" fill="rgba(135, 206, 250, 0.5)"/>
+                    
+                    <!-- Highlight areas for fragility detection -->
+                    <circle class="skeleton-part highlight" cx="125" cy="130" r="40" fill="rgba(255, 100, 100, 0.2)" stroke="rgba(255, 100, 100, 0.6)" stroke-width="2"/>
+                    <circle class="skeleton-part highlight" cx="100" cy="320" r="18" fill="rgba(255, 100, 100, 0.2)" stroke="rgba(255, 100, 100, 0.6)" stroke-width="2"/>
+                    <circle class="skeleton-part highlight" cx="150" cy="320" r="18" fill="rgba(255, 100, 100, 0.2)" stroke="rgba(255, 100, 100, 0.6)" stroke-width="2"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- Valeur Composite Système -->
+            <div class="panel-card">
+                <div class="main-value" id="systemValue">127.39</div>
+                <div class="value-label">Valeur Composite du Système Motrice</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #888888;">
+                    标准值 (63.27-156.86)
+                </div>
+                <div class="icon-grid">
+                    <div class="icon-circle" data-value="9437"></div>
+                    <div class="icon-circle" data-value="746"></div>
+                    <div class="icon-circle" data-value="4331"></div>
+                    <div class="icon-circle" data-value="6457"></div>
+                    <div class="icon-circle" data-value="783"></div>
+                </div>
+            </div>
+
+            <!-- Indicateurs et Barres -->
+            <div class="panel-card">
+                <h3>Indicateurs de Performance</h3>
+                <div class="progress-section">
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>RP - 96573</span>
+                            <span style="color: #00ff88;">H</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>RP - 63534</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 72%;"></div>
+                        </div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="progress-header">
+                            <span>BD - 75436</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 68%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graphiques Temporels -->
+            <div class="panel-card">
+                <h3>Évolution Temporelle</h3>
+                <div style="height: 150px; position: relative; margin: 15px 0;">
+                    <svg viewBox="0 0 300 150" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+                        <defs>
+                            <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#00ff88;stop-opacity:0.5" />
+                            </linearGradient>
+                        </defs>
+                        <rect x="10" y="100" width="30" height="50" fill="url(#barGradient)"/>
+                        <rect x="50" y="80" width="30" height="70" fill="url(#barGradient)"/>
+                        <rect x="90" y="60" width="30" height="90" fill="url(#barGradient)"/>
+                        <rect x="130" y="70" width="30" height="80" fill="url(#barGradient)"/>
+                        <rect x="170" y="50" width="30" height="100" fill="url(#barGradient)"/>
+                        <rect x="210" y="65" width="30" height="85" fill="url(#barGradient)"/>
+                        <rect x="250" y="55" width="30" height="95" fill="url(#barGradient)"/>
+                    </svg>
+                    <div style="position: absolute; bottom: -20px; left: 0; right: 0; display: flex; justify-content: space-around; font-size: 10px; color: #888888;">
+                        <span>00.32</span>
+                        <span>01.03</span>
+                        <span>05.65</span>
+                        <span>10.20</span>
+                        <span>15.45</span>
+                        <span>20.10</span>
+                        <span>25.30</span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-around; margin-top: 25px; font-size: 11px; color: #aaaaaa;">
+                    <span>6535</span>
+                    <span>ROSYH</span>
+                    <span>7463/874</span>
+                </div>
+            </div>
+
+            <!-- Indicateurs de Santé Clés -->
+            <div class="panel-card">
+                <h3>Indicateurs de Santé Clés</h3>
+                <div class="health-indicators">
+                    <div class="health-icon">
+                        <div class="icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </div>
+                        <div style="font-size: 16px; font-weight: bold; color: #ffffff;">85</div>
+                        <div class="label">Fréquence Cardiaque HR</div>
+                    </div>
+                    <div class="health-icon">
+                        <div class="icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </div>
+                        <div style="font-size: 16px; font-weight: bold; color: #ffffff;">14.2</div>
+                        <div class="label">Hémoglobine HGB</div>
+                    </div>
+                    <div class="health-icon">
+                        <div class="icon">
+                            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M8 12h8"></path>
+                            </svg>
+                        </div>
+                        <div style="font-size: 16px; font-weight: bold; color: #ffffff;">245</div>
+                        <div class="label">Plaquettes PLT</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('fr-FR', { hour12: false });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Load patient data
+        async function loadPatientData(patientId) {
+            try {
+                const response = await fetch(`/api/patients/${patientId}/statistiques`);
+                const data = await response.json();
+                
+                if (data.derniere_evaluation) {
+                    const eval = data.derniere_evaluation;
+                    
+                    // Update main values
+                    document.getElementById('indiceComplet').textContent = 
+                        eval.score_fragilite ? eval.score_fragilite.toFixed(2) : '102.67';
+                    document.getElementById('systemValue').textContent = 
+                        eval.score_fragilite ? (100 - eval.score_fragilite).toFixed(2) : '127.39';
+                    
+                    // Update skeleton highlights based on fragility
+                    const skeletonParts = document.querySelectorAll('.skeleton-part');
+                    skeletonParts.forEach(part => part.classList.remove('highlight'));
+                    
+                    if (eval.niveau_fragilite === 'Fragile' || eval.niveau_fragilite === 'Très fragile') {
+                        // Highlight legs and core
+                        const highlights = document.querySelectorAll('.skeleton-part.highlight');
+                        highlights.forEach(h => h.style.display = 'block');
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement des données:', error);
+            }
+        }
+
+        // Get patient ID from URL or use default
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get('patient');
+        if (patientId) {
+            loadPatientData(patientId);
+        }
+
+        // Animate skeleton parts on hover
+        document.querySelectorAll('.skeleton-part').forEach(part => {
+            part.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+            });
+            part.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
